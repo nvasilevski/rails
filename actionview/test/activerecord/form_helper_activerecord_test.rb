@@ -3,6 +3,7 @@
 require "active_record_unit"
 require "fixtures/project"
 require "fixtures/developer"
+require 'debug'
 
 class FormHelperActiveRecordTest < ActionView::TestCase
   tests ActionView::Helpers::FormHelper
@@ -21,6 +22,8 @@ class FormHelperActiveRecordTest < ActionView::TestCase
     @project.name = "project #321"
     @project.save
 
+
+    debugger;
     @developer.projects << @project
     @developer.save
     super
