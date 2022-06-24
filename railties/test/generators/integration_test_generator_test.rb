@@ -11,6 +11,13 @@ class IntegrationTestGeneratorTest < Rails::Generators::TestCase
     assert_file "test/integration/integration_test.rb", /class IntegrationTest < ActionDispatch::IntegrationTest/
   end
 
+  def test_after_generate_hook
+    output = run_generator %w(integration)
+    puts output
+    assert_file "test/integration/integration_test.rb", /class IntegrationTest < ActionDispatch::IntegrationTest/
+    assert_file "dummy_file.txt", "asdad"
+  end
+
   def test_namespaced_integration_test_skeleton_is_created
     run_generator %w(iguchi/integration)
     assert_file "test/integration/iguchi/integration_test.rb", /class Iguchi::IntegrationTest < ActionDispatch::IntegrationTest/

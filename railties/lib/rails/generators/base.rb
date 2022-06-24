@@ -15,6 +15,12 @@ module Rails
     end
 
     class Base < Thor::Group
+
+      def self.after_distpatch
+        files = Rails::Generators.class_variable_get :@@generated_files
+        @after_generate_callbacks.each { |clb| clb.call(files) }
+      end
+
       include Thor::Actions
       include Rails::Generators::Actions
 
@@ -22,12 +28,18 @@ module Rails
                                     desc: "Skip namespace (affects only isolated engines)"
       class_option :skip_collision_check, type: :boolean, default: false,
                                           desc: "Skip collision check"
+      
 
       add_runtime_options!
       strict_args_position!
 
       def self.exit_on_failure? # :nodoc:
         false
+      end
+
+      def self.after_generate(&block)
+        @after_generate_callbacks ||= []
+        @after_generate_callbacks << block
       end
 
       # Returns the source root for this generator using default_source_root as default.

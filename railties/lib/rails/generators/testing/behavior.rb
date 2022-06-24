@@ -65,12 +65,10 @@ module Rails
         # You can provide a configuration hash as second argument. This method returns the output
         # printed by the generator.
         def run_generator(args = default_arguments, config = {})
-          capture(:stdout) do
-            args += ["--skip-bundle"] unless args.include?("--no-skip-bundle") || args.include?("--dev")
-            args |= ["--skip-bootsnap"] unless args.include?("--no-skip-bootsnap")
+          args += ["--skip-bundle"] unless args.include?("--no-skip-bundle") || args.include?("--dev")
+          args |= ["--skip-bootsnap"] unless args.include?("--no-skip-bootsnap")
 
-            generator_class.start(args, config.reverse_merge(destination_root: destination_root))
-          end
+          generator_class.start(args, config.reverse_merge(destination_root: destination_root))
         end
 
         # Instantiate the generator.
