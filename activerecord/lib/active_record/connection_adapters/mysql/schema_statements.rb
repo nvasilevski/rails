@@ -4,6 +4,8 @@ module ActiveRecord
   module ConnectionAdapters
     module MySQL
       module SchemaStatements # :nodoc:
+        COLUMNS_NAME_INDEX = -2
+        COLUMNS_SETTINGS_INDEX = -1
         # Returns an array of indexes for the given table.
         def indexes(table_name)
           indexes = []
@@ -29,6 +31,7 @@ module ActiveRecord
                   [],
                   lengths: {},
                   orders: {},
+                  seq_in_index: {},
                   type: index_type,
                   using: index_using,
                   comment: row[:Index_comment].presence
@@ -38,14 +41,15 @@ module ActiveRecord
               if row[:Expression]
                 expression = row[:Expression]
                 expression = +"(#{expression})" unless expression.start_with?("(")
-                indexes.last[-2] << expression
-                indexes.last[-1][:expressions] ||= {}
-                indexes.last[-1][:expressions][expression] = expression
-                indexes.last[-1][:orders][expression] = :desc if row[:Collation] == "D"
+                indexes.last[COLUMNS_NAME_INDEX] << expression
+                indexes.last[COLUMNS_SETTINGS_INDEX][:expressions] ||= {}
+                indexes.last[COLUMNS_SETTINGS_INDEX][:expressions][expression] = expression
+                indexes.last[COLUMNS_SETTINGS_INDEX][:orders][expression] = :desc if row[:Collation] == "D"
               else
-                indexes.last[-2] << row[:Column_name]
-                indexes.last[-1][:lengths][row[:Column_name]] = row[:Sub_part].to_i if row[:Sub_part]
-                indexes.last[-1][:orders][row[:Column_name]] = :desc if row[:Collation] == "D"
+                indexes.last[COLUMNS_NAME_INDEX] << row[:Column_name]
+                indexes.last[COLUMNS_SETTINGS_INDEX][:lengths][row[:Column_name]] = row[:Sub_part].to_i if row[:Sub_part]
+                indexes.last[COLUMNS_SETTINGS_INDEX][:orders][row[:Column_name]] = :desc if row[:Collation] == "D"
+                indexes.last[COLUMNS_SETTINGS_INDEX][:seq_in_index][row[:Column_name]] = row[:Seq_in_index].to_i if row[:Seq_in_index]
               end
             end
           end
@@ -57,11 +61,11 @@ module ActiveRecord
               orders = options.delete(:orders)
               lengths = options.delete(:lengths)
 
-              columns = index[-1].to_h { |name|
+              columns = index[COLUMNS_SETTINGS_INDEX].to_h { |name|
                 [ name.to_sym, expressions[name] || +quote_column_name(name) ]
               }
 
-              index[-1] = add_options_for_index_columns(
+              index[COLUMNS_SETTINGS_INDEX] = add_options_for_index_columns(
                 columns, order: orders, length: lengths
               ).values.join(", ")
             end

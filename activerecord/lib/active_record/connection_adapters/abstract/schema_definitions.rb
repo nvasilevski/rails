@@ -6,6 +6,8 @@ module ActiveRecord
     # this type are typically created and returned by methods in database
     # adapters. e.g. ActiveRecord::ConnectionAdapters::MySQL::SchemaStatements#indexes
     class IndexDefinition # :nodoc:
+      class IndexColumnDefinition < Struct.new(:name, :seq_in_index); end
+
       attr_reader :table, :name, :unique, :columns, :lengths, :orders, :opclasses, :where, :type, :using, :comment, :valid
 
       def initialize(
@@ -15,6 +17,7 @@ module ActiveRecord
         lengths: {},
         orders: {},
         opclasses: {},
+        seq_in_index: {},
         where: nil,
         type: nil,
         using: nil,
@@ -25,6 +28,7 @@ module ActiveRecord
         @name = name
         @unique = unique
         @columns = columns
+        @seq_in_index = seq_in_index
         @lengths = concise_options(lengths)
         @orders = concise_options(orders)
         @opclasses = concise_options(opclasses)
@@ -33,6 +37,10 @@ module ActiveRecord
         @using = using
         @comment = comment
         @valid = valid
+      end
+
+      def column_definitions
+        @_column_defitions ||= @columns.map { |column_name| IndexColumnDefinition.new(column_name, @seq_in_index[column_name]) }
       end
 
       def valid?

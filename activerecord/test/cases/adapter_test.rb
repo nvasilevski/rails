@@ -76,6 +76,46 @@ module ActiveRecord
       assert_not @connection.data_source_exists?(nil)
     end
 
+    def test_column_definitions
+      idx_name = "accounts_idx"
+
+      indexes = @connection.indexes("accounts")
+      assert_empty indexes
+
+      @connection.add_index :accounts, [:credit_limit, :firm_id, :firm_name], name: idx_name
+      indexes = @connection.indexes("accounts")
+
+      index_defition = indexes.first
+      assert_equal idx_name, index_defition.name
+      expected_defitions = ["credit_limit", "firm_id", "firm_name"].sort
+      actual_defitions = index_defition.column_definitions.map(&:name).sort
+
+      assert_equal(expected_defitions, actual_defitions)
+    ensure
+      @connection.remove_index(:accounts, name: idx_name) rescue nil
+    end
+
+    def test_column_definitions_mysql
+      idx_name = "accounts_idx"
+
+      indexes = @connection.indexes("accounts")
+      assert_empty indexes
+
+      @connection.add_index :accounts, [:credit_limit, :firm_id, :firm_name], name: idx_name
+      indexes = @connection.indexes("accounts")
+
+      index_defition = indexes.first
+      assert_equal idx_name, index_defition.name
+      expected_defitions = [[1, "credit_limit"], [2, "firm_id"], [3, "firm_name"]]
+      actual_defitions = index_defition.column_definitions.sort_by(&:seq_in_index).map do |i_column_def|
+        [i_column_def.seq_in_index, i_column_def.name]
+      end
+
+      assert_equal(expected_defitions, actual_defitions)
+    ensure
+      @connection.remove_index(:accounts, name: idx_name) rescue nil
+    end if current_adapter?(:Mysql2Adapter)
+
     def test_indexes
       idx_name = "accounts_idx"
 
